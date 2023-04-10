@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: node-app
+  labels:
+    app: node-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: node-app
+  template:
+    metadata:
+      labels:
+        app: node-app
+    spec:
+      containers:
+        - name: node-app
+          image: haarvester/responce:v1.2
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-app-service
+  labels:
+    app: node-app
+spec:
+  selector:
+    app: node-app
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000
+  type: ClusterIP
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: node-app-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+  - host: test.gps-watch.kz
+    http:
+      paths:
+      - path: /success
+        pathType: Prefix
+        backend:
+          service:
+            name: node-app-service
+            port:
+              name: http
+      - path: /error
+        pathType: Prefix
+        backend:
+          service:
+            name: node-app-service
+            port:
+              name: http
+      - path: /notfound
+        pathType: Prefix
+        backend:
+          service:
+            name: node-app-service
+            port:
+              name: http
